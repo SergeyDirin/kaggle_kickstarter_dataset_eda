@@ -386,4 +386,13 @@ d %>%
   ggplot(aes(x=backers, y=n, group=state)) +
   geom_line(aes(color=state),size = 1.3)
 
+length(unique(d$country))
 
+d %>%
+  count(country) %>% 
+  ggplot() +
+  geom_bar(aes(x = reorder(country, n), y = n), stat = "identity") + 
+  xlab("Country") + 
+  ylab("Projects Count")+
+  coord_flip() +
+  ggtitle("Counties by number of projects")

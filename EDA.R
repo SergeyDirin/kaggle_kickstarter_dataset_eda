@@ -194,3 +194,13 @@ d %>%
 d %>%
   group_by(state)  %>%
   summarise(max_backers = max(backers)) 
+
+# countries
+d %>%
+  count(country) %>% 
+  ggplot() +
+  geom_bar(aes(x = reorder(country, n), y = n), stat = "identity") + 
+  xlab("Country") + 
+  ylab("Projects Count")+
+  coord_flip() +
+  ggtitle("Counties by number of projects")
