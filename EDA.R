@@ -1,16 +1,20 @@
 
+library(tidyverse)
+library(lubridate)
+
 # categories
 
-d_summ <- d %>%
-  count(main_category, state, wt = NULL, sort = T)
-
-ggplot(main_cat) +
+d %>%
+  count(main_category, state, wt = NULL, sort = T) %>%
+  ggplot() +
   geom_bar(aes(x = reorder(main_category, n), y = n), stat = "identity") + 
   xlab("Main Category") + 
   ylab("Count")+
   coord_flip()
 
-ggplot(main_cat) +
+d %>%
+  count(main_category, state, wt = NULL, sort = T) %>%
+  ggplot() +
   geom_bar(aes(x = reorder(main_category, n), y = n, fill = state), stat = "identity") + 
   xlab("Main Category") + 
   ylab("Count")+
@@ -18,11 +22,10 @@ ggplot(main_cat) +
   ggtitle("Most Frequent Categories")
 
 #sub categories
-subcats_count <- d %>% 
+d %>% 
   group_by(main_category) %>%
-  summarise(subCats = length(unique(category)))
-
-ggplot(subcats_count) +
+  summarise(subCats = length(unique(category))) %>%
+  ggplot() +
   geom_bar(aes(x = reorder(main_category, subCats), y = subCats), stat = "identity") + 
   xlab("Main Category") + 
   ylab("SubCategory Count")+
@@ -30,12 +33,11 @@ ggplot(subcats_count) +
   ggtitle("What categories have more sub-categories?")
 
 #deadline
-deadline_by_month <- d %>% 
+d %>% 
   filter(state %in% c("canceled", "failed", "successful")) %>%
   mutate(deadline_month = floor_date(deadline, unit = "month")) %>% 
-  count(deadline_month, state, wt = NULL, sort = T)
-
-ggplot(deadline_by_month) +
+  count(deadline_month, state, wt = NULL, sort = T) %>%
+  ggplot() +
   geom_line(aes(x = deadline_month, y=n)) +
   facet_grid(state~.) +
   xlab("Deadline") + 
@@ -132,7 +134,10 @@ d %>%
   group_by(state, backers)  %>%
   summarise(n = n()) %>%
   ggplot(aes(x=backers, y=n, group=state)) +
-  geom_line(aes(color=state),size = 1.3)
+  geom_line(aes(color=state),size = 1.3) +
+  xlab("Projects Count") + 
+  ylab("Backers") + 
+  ggtitle("Distribution of Projects with Backers below 25")
 
 t1 <- d %>%
   filter(state %in% c("canceled")) %>%
@@ -178,7 +183,7 @@ d %>%
   coord_flip() + 
   xlab("Projects Count") + 
   ylab("Backers") + 
-  ggtitle("Distribution of Projects with Backers from 50 till 1000")
+  ggtitle("Distribution of Projects with Backers from 1000 till 25000")
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
@@ -204,3 +209,34 @@ d %>%
   ylab("Projects Count")+
   coord_flip() +
   ggtitle("Counties by number of projects")
+
+# goals and pledged
+#is being over the goal success?
+d %>%
+  filter(pledged < goal & state == "successful") %>%
+  mutate(over_goal = goal - pledged) %>%
+  select( ID, main_category, launched, goal, over_goal, backers)
+
+d %>%
+  filter(pledged > goal & state != "successful") %>%
+  mutate(over_goal = goal - pledged) %>%
+  count(state) %>%
+  ggplot(aes(x = state, y = n)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.25)
+
+# what is undefined state?
+d %>%
+  filter(state == "undefined" & backers > 0) %>%
+  mutate(over_goal = goal - pledged) 
+# all undefined have 0 backers
+
+# get distribution on projects without backers
+
+d %>%
+  filter(state == "undefined") %>%
+  mutate(launched_year = year(launched)) %>%
+  count(launched_year) %>%
+  ggplot(aes(x = launched_year, y = n)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.25)

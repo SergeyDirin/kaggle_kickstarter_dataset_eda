@@ -229,7 +229,7 @@ ggplot(launched_by_month) +
   ggtitle("Projects over time dynamics")
 
 summary(d)
-# money goal, pledged
+# goal
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
@@ -396,3 +396,44 @@ d %>%
   ylab("Projects Count")+
   coord_flip() +
   ggtitle("Counties by number of projects")
+
+#is being over the goal success?
+d %>%
+  filter(pledged < goal & state == "successful") %>%
+  mutate(over_goal = goal - pledged) %>%
+  select( ID, main_category, launched, goal, over_goal, backers)
+
+d %>%
+  filter(pledged > goal & state != "successful") %>%
+  mutate(over_goal = goal - pledged) %>%
+  count(state) %>%
+  ggplot(aes(x = state, y = n)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.25)
+
+# what is undefined state?
+d %>%
+  filter(state == "undefined" & backers > 0) %>%
+  mutate(over_goal = goal - pledged) 
+# all undefined have 0 backers
+
+# get distribution on projects without backers
+
+d %>%
+  filter(state == "undefined") %>%
+  mutate(launched_year = year(launched)) %>%
+  count(launched_year) %>%
+  ggplot(aes(x = launched_year, y = n)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.25)
+
+
+
+
+
+
+
+
+
+
+
