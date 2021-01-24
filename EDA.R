@@ -47,27 +47,27 @@ d %>%
 # goals
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
-  filter(goal <= 100000) %>%
+  filter(usd_goal_real <= 100000) %>%
   ggplot() +
-  geom_histogram(aes(y = goal))+
+  geom_histogram(aes(y = usd_goal_real))+
   facet_grid(state~.) +
   coord_flip() + 
   ggtitle("Distribution of Goals below $100,000")
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
-  filter(goal >= 100000 & goal < 1000000) %>%
+  filter(usd_goal_real >= 100000 & usd_goal_real < 1000000) %>%
   ggplot() +
-  geom_histogram(aes(y = goal))+
+  geom_histogram(aes(y = usd_goal_real))+
   facet_grid(state~.) +
   coord_flip() + 
   ggtitle("Distribution of Goals from $100,000 till $1,000,000")
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
-  filter(goal >= 1000000) %>%
+  filter(usd_goal_real >= 1000000) %>%
   ggplot() +
-  geom_histogram(aes(y = goal))+
+  geom_histogram(aes(y = usd_goal_real))+
   facet_grid(state~.) +
   coord_flip() + 
   ggtitle("Distribution of Goals over $1,000,000")
@@ -77,43 +77,43 @@ d %>%
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
-  filter(pledged <= 100) %>%
+  filter(usd_pledged_real <= 1000) %>%
   ggplot() +
-  geom_histogram(aes(y = pledged))+
+  geom_histogram(aes(y = usd_pledged_real))+
   facet_grid(state~.) +
   coord_flip() + 
-  ggtitle("Distribution of Pledged below $100")
+  ggtitle("Distribution of Pledged below $1000")
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
-  filter(pledged >= 100 & pledged <= 100000) %>%
+  filter(usd_pledged_real >= 1000 & usd_pledged_real <= 100000) %>%
   ggplot() +
-  geom_histogram(aes(y = pledged))+
+  geom_histogram(aes(y = usd_pledged_real))+
   facet_grid(state~.) +
   coord_flip() + 
-  ggtitle("Distribution of Pledged from $100 till $100,000")
+  ggtitle("Distribution of Pledged from $1000 till $100,000")
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
-  filter(pledged >= 100000 & pledged <= 1000000) %>%
+  filter(usd_pledged_real >= 100000 & usd_pledged_real <= 1000000) %>%
   ggplot() +
-  geom_histogram(aes(y = pledged))+
+  geom_histogram(aes(y = usd_pledged_real))+
   facet_grid(state~.) +
   coord_flip() + 
   ggtitle("Distribution of Pledged from $100,000 till $1,000,000")
 
 d %>%
   filter(state %in% c("canceled", "failed", "successful")) %>%
-  filter(pledged >= 1000000) %>%
+  filter(usd_pledged_real >= 1000000) %>%
   ggplot() +
-  geom_histogram(aes(y = pledged))+
+  geom_histogram(aes(y = usd_pledged_real))+
   facet_grid(state~.) +
   coord_flip() + 
   ggtitle("Distribution of Pledged over $1,000,000")
 
 d %>%
   filter(state %in% c("canceled", "failed")) %>%
-  filter(pledged >= 1000000)
+  filter(usd_pledged_real >= 1000000)
 
 
 #backers
@@ -213,13 +213,15 @@ d %>%
 # goals and pledged
 #is being over the goal success?
 d %>%
-  filter(pledged < goal & state == "successful") %>%
-  mutate(over_goal = goal - pledged) %>%
-  select( ID, main_category, launched, goal, over_goal, backers)
+  filter(usd_pledged_real < usd_goal_real & state == "successful") %>%
+  mutate(over_goal = usd_goal_real - usd_pledged_real) %>%
+  select( ID, main_category, launched, usd_goal_real, over_goal, backers)
+#there are 5 project that did not meet the goal but successful
 
+# Distribution of unsuccessful projects that passed the goal
 d %>%
-  filter(pledged > goal & state != "successful") %>%
-  mutate(over_goal = goal - pledged) %>%
+  filter(usd_pledged_real > usd_goal_real & state != "successful") %>%
+  mutate(over_goal = usd_goal_real - usd_pledged_real) %>%
   count(state) %>%
   ggplot(aes(x = state, y = n)) +
   geom_bar(stat = "identity") +
@@ -228,7 +230,7 @@ d %>%
 # what is undefined state?
 d %>%
   filter(state == "undefined" & backers > 0) %>%
-  mutate(over_goal = goal - pledged) 
+  mutate(over_goal = usd_goal_real - usd_pledged_real) 
 # all undefined have 0 backers
 
 # get distribution on projects without backers
@@ -239,4 +241,63 @@ d %>%
   count(launched_year) %>%
   ggplot(aes(x = launched_year, y = n)) +
   geom_bar(stat = "identity") +
-  geom_text(aes(label = n), vjust = -0.25)
+  geom_text(aes(label = n), vjust = -0.25) +
+  ggtitle("Underfined Project number by Year")
+
+
+
+format.money  <- function(x, ...) {
+  paste0("$", formatC(as.numeric(x), format="f", digits=2, big.mark=","))
+}
+
+# check the projects that made money
+d %>%
+  filter(usd_pledged_real > usd_goal_real & state == "successful") %>%
+  mutate(over_goal = usd_pledged_real - usd_goal_real) %>%
+  group_by(main_category) %>%
+  summarise(profit = sum(over_goal)) %>%
+  ggplot(aes(x = reorder(main_category, profit), y = profit)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  geom_text(aes(label = format_money(profit), fontface = "bold"), hjust = "inward") +
+  xlab("Main Category") +
+  ylab("Over Goal Profit") +
+  ggtitle("Over Goal profit for successful projects")
+
+# Underfunded for unsuccessful Projects
+d %>%
+  filter(usd_pledged_real < usd_goal_real & state != "successful") %>%
+  mutate(over_goal = usd_goal_real - usd_pledged_real) %>%
+  group_by(main_category) %>%
+  summarise(profit = sum(over_goal)) %>%
+  ggplot(aes(x = reorder(main_category, profit), y = profit)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  geom_text(aes(label = format_money(profit), fontface = "bold"), hjust = "inward") +
+  xlab("Main Category") +
+  ylab("Over Goal Underfunded") +
+  ggtitle("Over Goal Underfunded for Unsuccessful Projects")
+
+# comparing goal to aerage in the category
+
+d %>%
+  filter(state == "successful") %>%
+  group_by(main_category) %>%
+  summarise(mean_goal = mean(usd_goal_real)) %>%
+  ggplot(aes(x = reorder(main_category, mean_goal), y = mean_goal)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  geom_text(aes(label = format_money(mean_goal), fontface = "bold"), hjust = "inward") +
+  ylab("Average Goal") +
+  xlab("Main Category") +
+  geom_hline(yintercept = 9533) +
+  annotate(geom = "text", y = 9200, x = 1, label = "$9,533 Overall Average", angle = 90, 
+           hjust = "inward", vjust = "bottom", nudge_y = 2) +
+  ggtitle("Average Goals by Categoory")
+
+
+
+
+
+
+

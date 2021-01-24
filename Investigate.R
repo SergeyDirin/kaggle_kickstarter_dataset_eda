@@ -429,11 +429,70 @@ d %>%
 
 
 
+format_money  <- function(x, ...) {
+  paste0("$", formatC(as.numeric(x), format="f", digits=2, big.mark=","))
+}
+
+# check the projects that made money
 
 
 
+d %>%
+  filter(state == "successful") %>%
+  summarise(mean_goal = mean(usd_goal_real))
 
 
+
+d %>%
+  filter(state == "successful") %>%
+  group_by(main_category) %>%
+  summarise(mean_goal = mean(usd_goal_real)) %>%
+  ggplot(aes(x = reorder(main_category, mean_goal), y = mean_goal)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  geom_text(aes(label = format_money(mean_goal), fontface = "bold"), hjust = "inward") +
+  ylab("Average Goal") +
+  xlab("Main Category") +
+  geom_hline(yintercept = 9533) +
+  annotate(geom = "text", y = 9200, x = 1, label = "$9,533 Overall Average", angle = 90, 
+           hjust = "inward", vjust = "bottom", nudge_y = 2) +
+  ggtitle("Average Goals by Categoory")
+
+
+
+# percentage of successful by category
+
+d %>%
+  group_by(main_category) %>%
+  summarise(
+    count = n(), 
+    success_count = sum(state == "successful"),
+    success_rate = sum(state == "successful") / n()
+    ) %>%
+  ggplot(aes(x = reorder(main_category, success_rate), y = success_rate)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  geom_text(aes(label = paste0(formatC(success_rate, format="f", digits = 2),"%")), nudge_y = 0.025) +
+  xlab("Main Category") +
+  ylab("Success Rate") +
+  ggtitle("Success Rate by Category")
+
+
+d %>%
+  group_by(main_category) %>%
+  summarise(
+    pledged = sum(usd_pledged_real), 
+    goal = sum(usd_goal_real),
+  ) %>%
+  pivot_longer(!main_category, names_to = "pledged_goal", values_to = "amount") %>%
+  ggplot(aes(x = reorder(main_category, amount), y = amount, fill = pledged_goal)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip() +
+  geom_text(aes(label = paste(format_money(amount/1000000),"M")), size = 3.8, 
+            position = position_dodge(width = 1), hjust = "inward") +
+  xlab("Main Category") +
+  ylab("Success Rate") +
+  ggtitle("Success Rate by Pledged Amount")
 
 
 
