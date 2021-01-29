@@ -491,8 +491,24 @@ d %>%
   geom_text(aes(label = paste(format_money(amount/1000000),"M")), size = 3.8, 
             position = position_dodge(width = 1), hjust = "inward") +
   xlab("Main Category") +
-  ylab("Success Rate") +
-  ggtitle("Success Rate by Pledged Amount")
+  ylab("Amount in USD") +
+  ggtitle("Goal and Pledget Amount Comparison")
+
+summary(d)
+dim(d)
+
+d %>% 
+  arrange(desc(backers)) %>%
+  top_n(20, backers) %>%
+  ggplot(aes(x = backers, y = usd_pledged_real)) +
+  geom_point(aes(color = main_category, shape = main_category)) + scale_color_brewer(palette="Dark2") +
+  geom_text(aes( label = paste0 ("$",round(usd_pledged_real / backers, 0) )), vjust = "bottom", nudge_y = 550000) +
+  xlab("Backers") +
+  ylab("Pledged USD $") +
+  ggtitle("Average Pledge for top 20 Backed Porjects")
 
 
-
+#top backed Project
+d %>%
+  top_n(1, backers) %>%
+  t()
