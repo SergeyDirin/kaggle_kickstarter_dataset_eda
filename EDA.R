@@ -278,7 +278,7 @@ d %>%
   ylab("Over Goal Underfunded") +
   ggtitle("Over Goal Underfunded for Unsuccessful Projects")
 
-# comparing goal to aerage in the category
+# comparing goal to average in the category
 
 d %>%
   filter(state == "successful") %>%
@@ -295,9 +295,63 @@ d %>%
            hjust = "inward", vjust = "bottom", nudge_y = 2) +
   ggtitle("Average Goals by Categoory")
 
+#Average Pledge for top 20 Backed Porjects
+d %>% 
+  arrange(desc(backers)) %>%
+  top_n(20, backers) %>%
+  ggplot(aes(x = backers, y = usd_pledged_real)) +
+  geom_point(aes(color = main_category, shape = main_category)) + scale_color_brewer(palette="Dark2") +
+  geom_text(aes( label = paste0 ("$",round(usd_pledged_real / backers, 0) )), vjust = "bottom", nudge_y = 550000) +
+  xlab("Backers") +
+  ylab("Pledged USD $") +
+  ggtitle("Average Pledge for top 20 Backed Porjects")
 
 
+#top backed Project
+d %>%
+  top_n(1, backers) %>%
+  t()
 
+# Photography
+d %>%
+  filter(main_category == "Photography") %>%
+  group_by(category) %>%
+  summarise(
+    pledged = sum(usd_pledged_real), 
+    goal = sum(usd_goal_real),
+  ) %>%
+  pivot_longer(!category, names_to = "pledged_goal", values_to = "amount") %>%
+  ggplot(aes(x = reorder(category, amount), y = amount, fill = pledged_goal)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip() +
+  geom_text(aes(label = paste(format_money(amount/1000000),"M")), size = 3.8, 
+            position = position_dodge(width = 1), hjust = "inward") +
+  xlab("Category") +
+  ylab("Amount in USD") +
+  ggtitle("Goal and Pledget Amount Comparison")
+
+d %>%
+  filter( main_category == "Photography", deadline >= mdy("1/1/2014"), deadline < mdy("1/1/2015")) %>%
+  mutate(deadline_month = floor_date(deadline, unit = "month")) %>% 
+  count(deadline_month, wt = NULL, sort = T) %>%
+  ggplot(aes(x = deadline_month, y = n)) +
+  geom_line() +
+  geom_smooth() +
+  xlab("Deadline") +
+  ylab("Number of Projects") +
+  ggtitle("Numer of Photography projects during 2014")
+
+
+d %>%
+  filter( main_category == "Photography") %>%
+  mutate(deadline_month = floor_date(deadline, unit = "month")) %>% 
+  count(deadline_month, wt = NULL, sort = T) %>%
+  ggplot(aes(x = deadline_month, y = n)) +
+  geom_line() +
+  geom_smooth() +
+  xlab("Deadline") +
+  ylab("Number of Projects") +
+  ggtitle("Numer of Photography projects over time")
 
 
 
