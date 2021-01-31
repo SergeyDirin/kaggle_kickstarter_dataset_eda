@@ -355,3 +355,21 @@ d %>%
 
 
 
+# number for the year compared to previous year
+photo_count_by_year <- d %>%
+  filter( main_category == "Photography") %>%
+  mutate(deadline_month = month(deadline)) %>% 
+  mutate(deadline_year = year(deadline)) %>% 
+  count(deadline_month, deadline_year, wt = NULL, sort = T) %>%
+  mutate(previous_year = deadline_year - 1)
+
+photo_count_by_year %>%
+  full_join(photo_count_by_year, by=c("previous_year"="deadline_year", "deadline_month" = "deadline_month"), suffix=c("","_prev")) %>%
+  filter(deadline_year %in% c(2014)) %>%
+  select(deadline_month, n, n_prev) %>%
+  pivot_longer(!deadline_month, names_to = "year", values_to = "projects") %>%
+  ggplot(aes(x = deadline_month, y = projects, fill = year))+
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = projects), size = 3.8, 
+            position = position_dodge(width = 1), vjust = "inward") +
+  ggtitle("Project comparison to the previous year")
